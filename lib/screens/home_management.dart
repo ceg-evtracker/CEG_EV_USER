@@ -1,6 +1,6 @@
 import 'dart:ffi';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -12,10 +12,19 @@ import '../helpers/shared_prefs.dart';
 import 'dart:async';
 import 'package:web_socket_channel/io.dart';
 import 'package:location/location.dart';
-//import 'package:http/http.dart';
+import 'package:http/http.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_switch/flutter_switch.dart';
 import 'package:web_socket_channel/io.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import '../model/user_model.dart';
+import 'login_screen.dart' as login;
+import 'package:google_fonts/google_fonts.dart';
+
+import 'login_screen.dart';
+import 'registration_screen.dart';
+
 
 class HomeManagement extends StatefulWidget {
   const HomeManagement({Key? key}) : super(key: key);
@@ -27,11 +36,13 @@ class HomeManagement extends StatefulWidget {
 class _HomeManagementState extends State<HomeManagement> {
   String? _message;
   bool _isSending = false;
+  bool status = false;
   LatLng latLng = getLatLngFromSharedPrefs();
   LatLng loc = getLatLngFromSharedPrefs();
   late CameraPosition _initialCameraPosition;
   late CameraPosition _currentCameraPosition;
   late MapboxMapController controller;
+  late MapboxMapController _mapController;
   IOWebSocketChannel? channel;
   Location _location = Location();
   LocationData? _locationData;
@@ -45,6 +56,9 @@ class _HomeManagementState extends State<HomeManagement> {
   final TextEditingController _searchController = TextEditingController();
 //final MapboxMapController _mapController = MapboxMapController();
   List<Map<String, dynamic>> _filteredLocations = [];
+
+   User? user = FirebaseAuth.instance.currentUser;
+  UserModel loggedInUser = UserModel();
 
   var Geolocator;
 
@@ -66,6 +80,14 @@ class _HomeManagementState extends State<HomeManagement> {
   @override
   void initState() {
     super.initState();
+    FirebaseFirestore.instance
+        .collection("users")
+        .doc(user?.uid)
+        .get()
+        .then((value) {
+      this.loggedInUser = UserModel.fromMap(value.data());
+      setState(() {});
+    });
     _initialCameraPosition = CameraPosition(target: latLng, zoom: 15);
     channel = IOWebSocketChannel.connect('ws://10.0.2.2:3000');
   }
@@ -123,16 +145,17 @@ class _HomeManagementState extends State<HomeManagement> {
     //   }
     // });
   }
+   int selectedIndex = 0;
+  List<IconData> data = [
+    Icons.home_outlined,
+    Icons.person_outline_sharp
+  ];
 
   _onStyleLoadedCallback() async {}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('USER APP'),
-          centerTitle: true,
-        ),
         body: SafeArea(
             child: Stack(
           children: [
@@ -148,6 +171,168 @@ class _HomeManagementState extends State<HomeManagement> {
                 minMaxZoomPreference: const MinMaxZoomPreference(14, 17),
               ),
             ),
+             Container(
+        alignment: Alignment.bottomCenter,
+        padding: const EdgeInsets.all(20.0),
+        //color: Colors.amber,
+        child: Material(
+           elevation: 10,
+          borderRadius: BorderRadius.circular(20),
+          color: Colors.black.withOpacity(0.75),
+          child: Container(
+            height: 60,
+            width: double.infinity,
+            child: ListView.builder(
+                itemCount: data.length,
+                padding: EdgeInsets.symmetric(horizontal: 10),
+                itemBuilder: (ctx, i) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 65),
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedIndex = i;
+                          });
+                          if(selectedIndex == 0) {
+                             Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => HomeManagement()));
+                        
+                          }
+                          else {
+                            showModalBottomSheet(
+                              backgroundColor: Colors.transparent,
+                              context: context, 
+                            shape: RoundedRectangleBorder(
+                           borderRadius: BorderRadius.circular(20.0),),
+                            builder: ((context) {
+                              return Container(
+                                width: MediaQuery.of(context).size.width,
+                                height: MediaQuery.of(context).size.height / 2.8,
+                                color: Colors.white.withOpacity(0),
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Positioned(
+                                      bottom: 0,
+                                      child: Container(
+                                        width: MediaQuery.of(context).size.width,
+                                        height: 170,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.only(
+                                            topRight: Radius.circular(50),
+                                            topLeft: Radius.circular(50))
+                                          )
+                                        ),
+                                    ),
+                                    Positioned(
+                                      top: 100,
+                                      child: CircleAvatar(
+                                        radius: 40,
+                                        backgroundColor: Color.fromARGB(255, 46, 46, 46),
+                      child: Icon(
+                        Icons.person,
+                        size: 40,
+                        color: Colors.white,
+                      ),
+
+                                    )),
+                                    Positioned(
+                                      top: 190,
+                                      child: Text(
+                                        "${loggedInUser.name}",
+                                        style: GoogleFonts.yantramanav(
+                                          color: Colors.black,
+                                          fontSize: 30,
+                                          fontWeight: FontWeight.w800,
+                                        )
+                                      )
+                                    ),
+                               Column(
+                                  children: <Widget>[
+                                    SizedBox(height: 200,),
+                  Divider(
+                    height: 60,
+                    thickness: 1.0,
+                    color: Colors.black,
+                    indent: 32,
+                    endIndent: 32,                     
+                  ),
+             
+                  Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Align(
+                alignment: Alignment.centerRight,
+      child: Icon(
+        Icons.exit_to_app,
+        size: 30,
+        
+        color: Colors.black,
+      ),
+    ),
+              GestureDetector(
+                onTap: ()async {
+                      final prefs = await SharedPreferences.getInstance();
+                    prefs.setBool('isLoggedIn',false);
+                    logout(context);
+                },
+              child: Text(
+                ' Logout',
+              style:  GoogleFonts.raleway(
+                color: Colors.black,
+                fontSize: 27.0,
+                fontWeight: FontWeight.w500,
+              
+              ),
+              ),
+              ),
+            ],
+          ),
+        ),
+            ],
+                                  ),
+                                  ],
+                                )
+                              );
+                                }));
+                          }
+                        },
+                        child: AnimatedContainer(
+                          duration: Duration(milliseconds: 250),
+                          width: 35,
+                          decoration: BoxDecoration(
+                            border: i == selectedIndex
+                                ? Border(
+                                    top: BorderSide(
+                                        width: 3.0, color: Colors.white))
+                                : null,
+                            gradient: i == selectedIndex
+                                ? LinearGradient(
+                                    colors: [
+                                        Colors.grey.shade800,
+                                        Colors.black
+                                      ],
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter)
+                                : null,
+                          ),
+                          child: Icon(
+                            data[i],
+                            size: 35,
+                            color: i == selectedIndex
+                                ? Colors.white
+                                : Colors.grey.shade800,
+                          ),
+                        ),
+                      ),
+                    ),
+                    scrollDirection: Axis.horizontal,
+                    ),
+          ),
+        ),
+      ),
             /* StreamBuilder(
                 stream: IOWebSocketChannel.connect('ws://10.0.2.2:3000').stream,
                 builder: (context, snapshot) {
@@ -181,6 +366,7 @@ class _HomeManagementState extends State<HomeManagement> {
                     return Text('Latitude: $latlongData');
                   }
                 }),*/
+                SizedBox(height: 20,),
             searchBarUI(),
             /* Positioned(
               top: 4,
@@ -214,6 +400,7 @@ class _HomeManagementState extends State<HomeManagement> {
               bottom: 80.0,
               right: 16.0,
               child: FloatingActionButton(
+                 backgroundColor: Colors.black.withOpacity(0.7),
                 onPressed: () {
                   controller.animateCamera(
                       CameraUpdate.newCameraPosition(_initialCameraPosition));
@@ -222,9 +409,10 @@ class _HomeManagementState extends State<HomeManagement> {
               ),
             ),
             Positioned(
-              bottom: 80.0,
-              left: 20.0,
+              bottom: 145.0,
+              left: 320.0,
               child: FloatingActionButton(
+                backgroundColor: Colors.black.withOpacity(0.7),
                 onPressed: () {
                   // Add your onPressed logic here
                   _message = "Hello World!";
@@ -347,6 +535,12 @@ class _HomeManagementState extends State<HomeManagement> {
         14,
       ),
     );
+  }
+   Future<void> logout(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => LoginScreen()));
+        Navigator.pushReplacementNamed(context, '/login');
   }
 }
 

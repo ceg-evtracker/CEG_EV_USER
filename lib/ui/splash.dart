@@ -49,6 +49,8 @@ class _SplashState extends State<Splash> {
         context,
         MaterialPageRoute(builder: (_) => const HomeManagement()),
         (route) => false);
+        Navigator.pushReplacementNamed(context, '/login');
+
   }
 
   @override
