@@ -7,6 +7,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../widgets/widgets.dart';
+import 'package:user/ui/splash.dart';
+
+var id1;
+var id2;
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({Key? key}) : super(key: key);
@@ -194,6 +198,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
           minWidth: MediaQuery.of(context).size.width,
           onPressed: () {
+            id1 = firstNameEditingController.text;
+            id2 = emailEditingController.text;
             signUp(emailEditingController.text, passwordEditingController.text);
           },
           child: const Text(
@@ -324,7 +330,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     Navigator.pushAndRemoveUntil(
         (context),
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => const Splash()),
         (route) => false);
   }
 }

@@ -4,10 +4,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:user/ui/splash.dart';
 import '../widgets/widgets.dart';
 import 'package:user/otp/phone.dart';
 import 'package:user/screens/forgot_pw_page.dart';
-//import 'package:shared_preferences/shared_preferences.dart';
+
+var ids;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -118,6 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
           padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
           minWidth: MediaQuery.of(context).size.width,
           onPressed: () async {
+            ids = emailController.text;
             final prefs = await SharedPreferences.getInstance();
             prefs.setBool('isLoggedIn', true);
             signIn(emailController.text, passwordController.text);
@@ -239,8 +242,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   Navigator.pushAndRemoveUntil(
                       (context),
                       MaterialPageRoute(
-                          builder: (context) => const HomeScreen()),
+                          builder: (context) => const Splash()),
                       (route) => false),
+                      
                   /*Navigator.of(context).pushReplacement(
                       MaterialPageRoute(builder: (context) => HomeScreen())),*/
                 });
